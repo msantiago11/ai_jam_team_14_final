@@ -1,0 +1,879 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Record-Breaking Lasers — Peak Power vs Wavelength</title>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js" charset="utf-8"></script>
+<style>
+  :root{
+    color-scheme: dark;
+    --bg:#070a12;
+    --bg2:#0b1020;
+    --panel:rgba(17,24,39,.78);
+    --panel2:rgba(11,17,32,.88);
+    --panel3:rgba(30,41,59,.72);
+    --glass:rgba(255,255,255,.07);
+    --line:rgba(148,163,184,.20);
+    --line2:rgba(148,163,184,.32);
+    --ink:#f8fafc;
+    --soft:#dbe3ef;
+    --muted:#94a3b8;
+    --muted2:#64748b;
+    --accent:#7c3aed;
+    --accent2:#06b6d4;
+    --accent3:#22c55e;
+    --warn:#f59e0b;
+    --bad:#fb7185;
+    --good:#34d399;
+    --shadow:0 24px 80px rgba(0,0,0,.42);
+    --radius:24px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; min-height:100vh; color:var(--ink);
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    background:
+      radial-gradient(circle at 10% -10%, rgba(124,58,237,.45), transparent 36rem),
+      radial-gradient(circle at 88% 4%, rgba(6,182,212,.32), transparent 34rem),
+      radial-gradient(circle at 20% 82%, rgba(34,197,94,.10), transparent 30rem),
+      linear-gradient(135deg, var(--bg), var(--bg2) 52%, #090b15);
+    overflow-x:hidden;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; pointer-events:none; opacity:.08; z-index:-1;
+    background-image:
+      linear-gradient(rgba(255,255,255,.7) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.7) 1px, transparent 1px);
+    background-size:68px 68px;
+    mask-image:linear-gradient(to bottom, black, transparent 80%);
+  }
+  a{color:#93c5fd; text-decoration:none}
+  a:hover{text-decoration:underline}
+  button,input,select{font:inherit}
+  button{border:0; color:inherit}
+  .app{width:min(1480px, calc(100% - 36px)); margin:0 auto; padding:26px 0 56px}
+  .topbar{display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:18px}
+  .brand{display:flex; align-items:center; gap:12px; color:var(--soft); font-weight:750; letter-spacing:.01em}
+  .brand-mark{
+    width:38px; height:38px; border-radius:13px; display:grid; place-items:center;
+    background:linear-gradient(135deg, rgba(124,58,237,.96), rgba(6,182,212,.85));
+    box-shadow:0 14px 40px rgba(6,182,212,.24), inset 0 0 0 1px rgba(255,255,255,.28);
+  }
+  .brand-mark svg{width:23px; height:23px; filter:drop-shadow(0 3px 10px rgba(0,0,0,.32))}
+  .top-actions{display:flex; flex-wrap:wrap; gap:10px; justify-content:flex-end}
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:9px;
+    min-height:40px; padding:10px 14px; border-radius:999px; cursor:pointer;
+    background:rgba(255,255,255,.08); border:1px solid var(--line); color:var(--soft);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.07); transition:.18s ease;
+  }
+  .btn:hover{transform:translateY(-1px); background:rgba(255,255,255,.12); border-color:var(--line2); text-decoration:none}
+  .btn.primary{background:linear-gradient(135deg, #7c3aed, #06b6d4); border-color:rgba(255,255,255,.22); color:white; font-weight:750}
+  .btn.ghost{background:transparent}
+  .btn.small{min-height:32px; padding:7px 10px; font-size:12px}
+  .btn[aria-pressed="true"]{background:rgba(124,58,237,.25); border-color:rgba(167,139,250,.62); color:white}
+  .hero{
+    position:relative; overflow:hidden; border:1px solid rgba(255,255,255,.14); border-radius:32px;
+    background:
+      linear-gradient(135deg, rgba(15,23,42,.92), rgba(30,41,59,.62)),
+      radial-gradient(circle at 76% 20%, rgba(6,182,212,.22), transparent 26rem);
+    box-shadow:var(--shadow); padding:34px;
+  }
+  .hero::after{
+    content:""; position:absolute; inset:auto -15% -55% auto; width:560px; height:560px; border-radius:50%;
+    background:radial-gradient(circle, rgba(124,58,237,.18), transparent 68%); filter:blur(4px); pointer-events:none;
+  }
+  .hero-grid{display:grid; grid-template-columns:minmax(0,1.4fr) minmax(320px,.75fr); gap:24px; position:relative; z-index:1}
+  .eyebrow{display:inline-flex; align-items:center; gap:8px; color:#c4b5fd; font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.12em; margin-bottom:12px}
+  .pulse-dot{width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 8px rgba(34,197,94,.13)}
+  h1{font-size:clamp(34px, 5vw, 68px); line-height:.95; letter-spacing:-.06em; margin:0 0 16px}
+  .hero p{max-width:850px; margin:0; color:#cbd5e1; font-size:clamp(15px, 1.6vw, 18px)}
+  .hero .micro{margin-top:16px; color:#94a3b8; font-size:13px}
+  .source-card{
+    background:rgba(2,6,23,.48); border:1px solid rgba(255,255,255,.12); border-radius:24px; padding:18px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.07);
+  }
+  .source-card h2{font-size:15px; margin:0 0 10px; letter-spacing:.01em}
+  .status-line{display:flex; gap:10px; align-items:flex-start; color:#cbd5e1; font-size:13px; line-height:1.35; margin-bottom:14px}
+  .status-light{flex:0 0 auto; width:10px; height:10px; border-radius:50%; background:#f59e0b; box-shadow:0 0 0 7px rgba(245,158,11,.12); margin-top:4px}
+  .status-light.good{background:#22c55e; box-shadow:0 0 0 7px rgba(34,197,94,.12)}
+  .dropzone{
+    border:1px dashed rgba(148,163,184,.45); border-radius:18px; padding:16px; text-align:center; color:#cbd5e1;
+    background:rgba(255,255,255,.045); transition:.18s ease;
+  }
+  .dropzone.drag{border-color:#67e8f9; background:rgba(6,182,212,.16); transform:scale(1.01)}
+  .dropzone b{display:block; color:white; margin-bottom:2px}
+  .dropzone span{font-size:12px; color:var(--muted)}
+  .hidden{display:none!important}
+  .stats{display:grid; grid-template-columns:repeat(6, minmax(0,1fr)); gap:14px; margin:18px 0}
+  .metric{
+    position:relative; overflow:hidden; background:linear-gradient(180deg, rgba(255,255,255,.075), rgba(255,255,255,.035));
+    border:1px solid var(--line); border-radius:22px; padding:17px; min-height:122px;
+    box-shadow:0 18px 60px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.06);
+  }
+  .metric::after{content:""; position:absolute; inset:auto -35px -45px auto; width:120px; height:120px; border-radius:50%; background:rgba(124,58,237,.15); filter:blur(3px)}
+  .metric .label{color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.10em; font-weight:800}
+  .metric .value{font-size:clamp(24px, 2.7vw, 34px); line-height:1; font-weight:850; letter-spacing:-.04em; margin:12px 0 8px}
+  .metric .hint{font-size:12px; color:#cbd5e1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%}
+  .metric.good .value{color:#86efac}.metric.warn .value{color:#fbbf24}.metric.bad .value{color:#fda4af}.metric.cyan .value{color:#67e8f9}.metric.purple .value{color:#c4b5fd}
+  .grid{display:grid; grid-template-columns:minmax(0,1fr) 380px; gap:18px; align-items:start}
+  .panel{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow);
+    backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
+  }
+  .panel-head{display:flex; align-items:flex-start; justify-content:space-between; gap:14px; padding:18px 20px 0}
+  .panel-title{margin:0; font-size:16px; letter-spacing:-.01em}
+  .panel-sub{margin:4px 0 0; color:var(--muted); font-size:12px}
+  .panel-body{padding:18px 20px 20px}
+  .controls{display:grid; grid-template-columns:1fr; gap:12px; margin-bottom:14px}
+  .search-row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+  .searchbox{position:relative; flex:1 1 360px}
+  .searchbox input{
+    width:100%; min-height:44px; color:var(--ink); background:rgba(2,6,23,.72); border:1px solid var(--line);
+    border-radius:16px; padding:0 15px 0 42px; outline:none; transition:.18s ease;
+  }
+  .searchbox input:focus{border-color:#67e8f9; box-shadow:0 0 0 4px rgba(6,182,212,.14)}
+  .searchbox svg{position:absolute; left:14px; top:50%; transform:translateY(-50%); width:18px; height:18px; color:var(--muted)}
+  .filters{display:grid; gap:10px}
+  .filter-group{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+  .filter-label{font-size:11px; text-transform:uppercase; letter-spacing:.11em; color:#a5b4fc; font-weight:850; min-width:82px}
+  .chips{display:flex; flex-wrap:wrap; gap:7px}
+  .chip{
+    display:inline-flex; align-items:center; gap:7px; min-height:31px; padding:7px 11px; border-radius:999px;
+    background:rgba(15,23,42,.82); color:#cbd5e1; border:1px solid var(--line); cursor:pointer; user-select:none; font-size:12px;
+    transition:.18s ease;
+  }
+  .chip:hover{transform:translateY(-1px); border-color:var(--line2)}
+  .chip[data-on="true"]{background:var(--chip-bg, rgba(124,58,237,.24)); border-color:var(--chip-line, rgba(167,139,250,.48)); color:white}
+  .chip .mini-dot{width:8px;height:8px;border-radius:99px;background:var(--chip-color,#94a3b8)}
+  .plot-shell{position:relative; overflow:hidden; border-radius:20px; background:rgba(2,6,23,.36); border:1px solid rgba(255,255,255,.08)}
+  #plot{width:100%; height:590px}
+  .plot-empty{padding:56px 24px; text-align:center; color:var(--muted)}
+  .count-row{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; padding:12px 2px 0; color:var(--muted); font-size:12px}
+  .legend-note{display:flex; gap:12px; flex-wrap:wrap}
+  .legend-note span{display:inline-flex; align-items:center; gap:6px}
+  .plot-legend{
+    display:flex; flex-wrap:wrap; align-items:center; gap:9px 12px;
+    margin:2px 0 12px; padding:10px 12px; border:1px solid rgba(148,163,184,.16);
+    background:rgba(2,6,23,.28); border-radius:16px; color:#cbd5e1; font-size:12px;
+  }
+  .plot-legend b{font-size:11px; color:#a5b4fc; text-transform:uppercase; letter-spacing:.09em; margin-right:2px}
+  .legend-item{display:inline-flex; align-items:center; gap:6px; white-space:nowrap}
+  .legend-swatch{width:10px; height:10px; border-radius:999px; background:var(--swatch,#94a3b8); box-shadow:0 0 0 3px color-mix(in srgb, var(--swatch,#94a3b8), transparent 78%)}
+  .legend-shape{width:12px; height:12px; display:inline-grid; place-items:center; color:#dbeafe; font-size:12px; line-height:1}
+  .sidebar{display:grid; gap:18px; position:sticky; top:16px}
+  .info-list{display:grid; gap:12px}
+  .info-item{display:grid; grid-template-columns:32px 1fr; gap:11px; align-items:start}
+  .info-icon{width:32px;height:32px;border-radius:12px;display:grid;place-items:center;background:rgba(124,58,237,.16);color:#ddd6fe;border:1px solid rgba(167,139,250,.22)}
+  .info-item h3{font-size:13px;margin:0 0 3px}.info-item p{font-size:12px;color:var(--muted);margin:0;line-height:1.45}
+  .unit-table{width:100%; border-collapse:collapse; font-size:12px; overflow:hidden; border-radius:16px}
+  .unit-table th,.unit-table td{padding:10px 8px; border-bottom:1px solid var(--line); text-align:left}
+  .unit-table th{color:#a5b4fc; font-size:10px; text-transform:uppercase; letter-spacing:.08em}
+  .unit-table tr:last-child td{border-bottom:0}
+  .health{display:grid; gap:10px}
+  .health-row{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; border:1px solid var(--line); background:rgba(2,6,23,.38); border-radius:14px; font-size:12px}
+  .health-row b{font-size:16px}.health-row span{color:var(--muted)}
+  .detail-card{min-height:180px}
+  .detail-empty{color:var(--muted); font-size:13px; line-height:1.5}
+  .detail-title{margin:0 0 5px; font-size:18px; letter-spacing:-.02em}.detail-place{margin:0 0 13px;color:var(--muted);font-size:13px}
+  .tag-row{display:flex; flex-wrap:wrap; gap:7px; margin:12px 0}
+  .tag{display:inline-flex; align-items:center; min-height:25px; padding:5px 9px; border-radius:999px; font-size:11px; border:1px solid var(--line); background:rgba(255,255,255,.06); color:#dbeafe}
+  .detail-grid{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin-top:12px}
+  .kv{padding:10px;border-radius:14px;background:rgba(2,6,23,.38);border:1px solid rgba(148,163,184,.14)}
+  .kv .k{font-size:10px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted)}.kv .v{font-size:14px;font-weight:750;margin-top:2px;color:white}
+  .notes{margin-top:12px; color:#cbd5e1; font-size:12px; line-height:1.45; max-height:160px; overflow:auto; padding-right:4px}
+  .table-panel{margin-top:18px; overflow:hidden}
+  .table-tools{display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end}
+  .table-wrap{overflow:auto; max-height:620px; border-top:1px solid var(--line)}
+  table{width:100%; min-width:1180px; border-collapse:separate; border-spacing:0; font-size:13px}
+  th,td{padding:12px 12px; border-bottom:1px solid rgba(148,163,184,.15); text-align:left; white-space:nowrap; vertical-align:middle}
+  th{position:sticky; top:0; z-index:2; background:rgba(15,23,42,.98); color:#a5b4fc; font-size:11px; text-transform:uppercase; letter-spacing:.08em; cursor:pointer; user-select:none}
+  tr:hover td{background:rgba(255,255,255,.035)}
+  td.name-cell{white-space:normal; min-width:250px; max-width:360px; color:#f8fafc; font-weight:720}
+  td.inst-cell{white-space:normal; min-width:240px; max-width:420px; color:#cbd5e1}
+  .source-link{display:inline-flex; max-width:170px; overflow:hidden; text-overflow:ellipsis; vertical-align:middle}
+  .pill{display:inline-flex; align-items:center; gap:6px; padding:5px 9px; border-radius:999px; font-size:11px; border:1px solid var(--line); background:rgba(255,255,255,.055)}
+  .pill.good{color:#86efac; border-color:rgba(134,239,172,.28); background:rgba(34,197,94,.10)}
+  .pill.warn{color:#fde68a; border-color:rgba(253,230,138,.28); background:rgba(245,158,11,.10)}
+  .pill.bad{color:#fda4af; border-color:rgba(253,164,175,.25); background:rgba(244,63,94,.10)}
+  .pill.cyan{color:#67e8f9; border-color:rgba(103,232,249,.25); background:rgba(6,182,212,.10)}
+  .section-grid{display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:18px}
+  .team-panel{margin-top:18px}
+  .team-grid{display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:14px}
+  .member-card{
+    position:relative; overflow:hidden; min-height:150px; padding:16px; border-radius:18px;
+    border:1px solid rgba(148,163,184,.18); background:linear-gradient(180deg, rgba(255,255,255,.065), rgba(255,255,255,.028));
+  }
+  .member-card::after{content:""; position:absolute; right:-26px; bottom:-38px; width:104px; height:104px; border-radius:50%; background:rgba(6,182,212,.09); filter:blur(2px)}
+  .member-card h3{position:relative; z-index:1; margin:0 0 8px; font-size:15px; letter-spacing:-.01em; color:#f8fafc}
+  .member-card p{position:relative; z-index:1; margin:0; color:#aebbd0; font-size:12px; line-height:1.45}
+  .role-pill{position:relative; z-index:1; display:inline-flex; margin-top:12px; padding:6px 10px; border-radius:999px; color:#dbeafe; background:rgba(124,58,237,.18); border:1px solid rgba(167,139,250,.28); font-size:11px; font-weight:800; letter-spacing:.02em}
+  .copy-block{display:flex; gap:10px; align-items:center; justify-content:space-between; border:1px solid var(--line); background:rgba(2,6,23,.38); border-radius:16px; padding:12px; margin-top:12px}
+  code{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; color:#bae6fd; font-size:12px}
+  .footer{color:var(--muted2); font-size:12px; text-align:center; padding:26px 0 0}
+  .toast{position:fixed; right:18px; bottom:18px; z-index:10; min-width:220px; max-width:360px; padding:13px 15px; border-radius:16px; background:rgba(15,23,42,.96); border:1px solid var(--line2); box-shadow:var(--shadow); color:#e2e8f0; transform:translateY(20px); opacity:0; pointer-events:none; transition:.2s ease}
+  .toast.show{transform:translateY(0); opacity:1}
+  @media (max-width:1180px){.stats{grid-template-columns:repeat(3,1fr)}.hero-grid,.grid,.section-grid{grid-template-columns:1fr}.team-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.sidebar{position:static}.hero{padding:26px}}
+  @media (max-width:720px){.app{width:min(100% - 22px, 1480px); padding-top:14px}.topbar{align-items:flex-start; flex-direction:column}.stats{grid-template-columns:repeat(2,1fr)}.team-grid{grid-template-columns:1fr}#plot{height:430px}.hero{border-radius:24px}.hero-grid{gap:18px}.panel-head{flex-direction:column}.table-tools{justify-content:flex-start}}
+  @media (max-width:460px){.stats{grid-template-columns:1fr}.metric{min-height:96px}h1{font-size:35px}.hero{padding:20px}.brand span{font-size:14px}}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important; scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="brand" aria-label="Site brand">
+      <div class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M13.6 2 4 13.4h7.2L10.4 22 20 9.8h-7.1L13.6 2Z" fill="white"/></svg>
+      </div>
+      <span>Record-Breaking Lasers Database</span>
+    </div>
+    <div class="top-actions">
+      <button class="btn ghost small" id="reloadBtn" title="Reload data.csv from this folder">Reload data.csv</button>
+      <button class="btn small" id="copyHeadersBtn">Copy CSV headers</button>
+      <button class="btn primary" id="importBtn">Import CSV</button>
+      <input class="hidden" id="csvInput" type="file" accept=".csv,text/csv">
+    </div>
+  </div>
+
+  <section class="hero" id="dropArea">
+    <div class="hero-grid">
+      <div>
+        <div class="eyebrow"><span class="pulse-dot"></span>AI-assisted laser catalogue</div>
+        <h1>Peak power vs wavelength, kept spreadsheet-first.</h1>
+        <p>This site turns your team’s CSV export into an interactive laser-record catalogue: searchable table, log-scale plot, unit conversions, source checks, and verification flags.</p>
+        <p class="micro">To update the site later, export your spreadsheet as <b>CSV</b> and replace <code>data.csv</code>, or use the Import CSV button for a quick local preview.</p>
+      </div>
+      <div class="source-card">
+        <h2>Data source</h2>
+        <div class="status-line"><span class="status-light" id="sourceLight"></span><span id="sourceMsg">Loading <code>data.csv</code>...</span></div>
+        <div class="dropzone" id="dropzone">
+          <b>Drop a new CSV here</b>
+          <span>Preview updates instantly. To make it permanent, replace the actual <code>data.csv</code> file in this folder.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="stats" aria-label="Dataset summary">
+    <div class="metric cyan"><div class="label">Rows loaded</div><div class="value" id="statTotal">—</div><div class="hint" id="statTotalHint">CSV rows in table</div></div>
+    <div class="metric good"><div class="label">Plotted points</div><div class="value" id="statPlot">—</div><div class="hint">Wavelength + peak power present</div></div>
+    <div class="metric purple"><div class="label">Highest peak</div><div class="value" id="statPeak">—</div><div class="hint" id="statPeakHint">—</div></div>
+    <div class="metric"><div class="label">Countries</div><div class="value" id="statCountries">—</div><div class="hint">Unique country entries</div></div>
+    <div class="metric"><div class="label">Technologies</div><div class="value" id="statTechs">—</div><div class="hint">Technology families shown</div></div>
+    <div class="metric warn"><div class="label">Need source</div><div class="value" id="statMissingSource">—</div><div class="hint">Missing/placeholder DOI or link</div></div>
+  </section>
+
+  <div class="grid">
+    <main>
+      <section class="panel">
+        <div class="panel-head">
+          <div><h2 class="panel-title">Interactive plot</h2><p class="panel-sub">Each marker is one laser system or demonstration. Peak power uses a log scale.</p></div>
+          <div class="table-tools">
+            <button class="btn small" id="resetBtn">Reset filters</button>
+            <button class="btn small" id="exportBtn">Export visible CSV</button>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="controls">
+            <div class="search-row">
+              <label class="searchbox" for="q">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m21 21-4.3-4.3m1.3-5.2a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                <input id="q" type="search" placeholder="Search name, institution, country, notes...">
+              </label>
+              <button class="btn small" id="verifyToggle" aria-pressed="false">Needs verification</button>
+              <button class="btn small" id="plotReadyToggle" aria-pressed="false">Plot-ready only</button>
+            </div>
+            <div class="filters">
+              <div class="filter-group"><div class="filter-label">Technology</div><div class="chips" id="techChips"></div></div>
+              <div class="filter-group"><div class="filter-label">Status</div><div class="chips" id="statusChips"></div></div>
+              <div class="filter-group"><div class="filter-label">Band</div><div class="chips" id="bandChips"></div></div>
+            </div>
+          </div>
+          <div class="plot-legend" id="plotLegend" aria-label="Technology and shape key"></div>
+          <div class="plot-shell"><div id="plot"></div></div>
+          <div class="count-row">
+            <div id="count">—</div>
+            <div class="legend-note"><span>● demonstrated</span><span>◇ design / commissioning</span><span>marker size ≈ repetition rate</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel table-panel">
+        <div class="panel-head">
+          <div><h2 class="panel-title">Searchable table</h2><p class="panel-sub">Click any row or plotted point to inspect details and verification flags.</p></div>
+        </div>
+        <div class="table-wrap">
+          <table id="tbl"><thead></thead><tbody></tbody></table>
+        </div>
+      </section>
+    </main>
+
+    <aside class="sidebar">
+      <section class="panel">
+        <div class="panel-head"><div><h2 class="panel-title">How to read it</h2><p class="panel-sub">A quick legend for viewers.</p></div></div>
+        <div class="panel-body info-list">
+          <div class="info-item"><div class="info-icon">λ</div><div><h3>Horizontal axis</h3><p>Wavelength is plotted in micrometers, written <b>µm</b>. The table also keeps nanometers for spreadsheet readability.</p></div></div>
+          <div class="info-item"><div class="info-icon">PW</div><div><h3>Vertical axis</h3><p>Peak power is shown in petawatts on a logarithmic scale, so each major step is a multiplication.</p></div></div>
+          <div class="info-item"><div class="info-icon">●</div><div><h3>Color and shape</h3><p>Color groups technology families. Circles are demonstrated systems; diamonds are design, planned, or commissioning entries.</p></div></div>
+          <div class="info-item"><div class="info-icon">↻</div><div><h3>Marker size</h3><p>Larger markers indicate higher repetition rate when the CSV gives usable rep-rate data.</p></div></div>
+        </div>
+      </section>
+
+      <section class="panel detail-card">
+        <div class="panel-head"><div><h2 class="panel-title">Selected laser</h2><p class="panel-sub">Click a marker or table row.</p></div></div>
+        <div class="panel-body" id="detail"><p class="detail-empty">No laser selected yet. Try clicking the highest point on the graph, then verify its pulse energy, pulse duration, peak power, and source.</p></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><div><h2 class="panel-title">Data health</h2><p class="panel-sub">Use this while teammates add rows.</p></div></div>
+        <div class="panel-body health" id="healthBox"></div>
+      </section>
+    </aside>
+  </div>
+
+  <section class="section-grid">
+    <section class="panel">
+      <div class="panel-head"><div><h2 class="panel-title">About this project</h2><p class="panel-sub">Why the site exists.</p></div></div>
+      <div class="panel-body">
+        <p class="panel-sub" style="font-size:13px;line-height:1.65;color:#cbd5e1;margin:0">This catalogue collects high-peak-power laser systems and makes their record values easier to compare across wavelength, technology, country, repetition rate, and source quality. The goal is a small, reliable, traceable dataset rather than a large table of unchecked numbers.</p>
+        <div class="copy-block"><code id="headersText">Laser/facility, Institution, Country, Wavelength, Pulse energy, Pulse duration [fs], Peak power, Rep. rate, Year demonstrated, Laser technology, Reference DOI/link, Notes, Description</code><button class="btn small" id="copyHeadersBtn2">Copy</button></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><div><h2 class="panel-title">Unit conversion guide</h2><p class="panel-sub">Spreadsheet can use common units; the loader normalizes them.</p></div></div>
+      <div class="panel-body">
+        <table class="unit-table" aria-label="Unit conversion guide">
+          <thead><tr><th>Quantity</th><th>Accepted examples</th><th>Normalized</th></tr></thead>
+          <tbody>
+            <tr><td>Wavelength</td><td>800 nm, 0.8 µm</td><td>µm on plot, nm in table</td></tr>
+            <tr><td>Pulse energy</td><td>mJ, J, kJ, MJ</td><td>J</td></tr>
+            <tr><td>Duration</td><td>fs, ps, ns</td><td>fs</td></tr>
+            <tr><td>Peak power</td><td>GW, TW, PW, EW</td><td>PW</td></tr>
+            <tr><td>Rep. rate</td><td>Hz, kHz, shot/min</td><td>Hz</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </section>
+
+  <section class="panel team-panel" id="team">
+    <div class="panel-head"><div><h2 class="panel-title">Team members and contributions</h2><p class="panel-sub">Project roles for the AI Jam laser-catalogue website.</p></div></div>
+    <div class="panel-body">
+      <div class="team-grid">
+        <article class="member-card"><h3>Micah A. Santiago</h3><p>Department of Physics and Astronomy, Stony Brook University, Stony Brook, NY, 11794</p><span class="role-pill">Frontend + Backend Interactive GUI</span></article>
+        <article class="member-card"><h3>Carl Andre Montoya</h3><p>Department of Mechanical Engineering, Stony Brook University, Stony Brook, NY 11794</p><span class="role-pill">Data Collection and Organization</span></article>
+        <article class="member-card"><h3>Jeimilitza Sainz Lopez</h3><p>Computer Engineering, Interamerican University of Puerto Rico, Bayamon Campus, PR, 00957</p><span class="role-pill">Data Validation</span></article>
+        <article class="member-card"><h3>Aeden Amatulli</h3><p>Department of Physics and Astronomy, Rochester Institute of Technology, Rochester, NY 14623</p><span class="role-pill">Data Validation</span></article>
+        <article class="member-card"><h3>Jack Montoya</h3><p>Department of Mechanical Engineering, Georgia Institute of Technology, Atlanta, GA 30332</p><span class="role-pill">Data Validation</span></article>
+        <article class="member-card"><h3>Hakim Johnson</h3><p>Computer Science Networking and Security, City College of Technology, NY 11201</p><span class="role-pill">Data Validation</span></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section-grid">
+    <section class="panel">
+      <div class="panel-head"><div><h2 class="panel-title">Data quality rules</h2><p class="panel-sub">What the verification flags mean.</p></div></div>
+      <div class="panel-body info-list">
+        <div class="info-item"><div class="info-icon">1</div><div><h3>Every major number should trace to a source</h3><p>Use a DOI, paper, report, or facility page for peak power, wavelength, energy, duration, and repetition rate.</p></div></div>
+        <div class="info-item"><div class="info-icon">2</div><div><h3>Reported vs computed peak power</h3><p>If the paper does not report peak power directly, the loader can compute it as energy divided by duration. The row will be flagged.</p></div></div>
+        <div class="info-item"><div class="info-icon">3</div><div><h3>Missing values stay visible</h3><p>Rows without wavelength or peak power remain in the table and health panel, but they cannot appear on the plot yet.</p></div></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><div><h2 class="panel-title">Known limitations</h2><p class="panel-sub">Good to mention in your presentation.</p></div></div>
+      <div class="panel-body info-list">
+        <div class="info-item"><div class="info-icon">!</div><div><h3>Mixed data types</h3><p>The spreadsheet may include demonstrated, design, planned, and commissioning values. The status filter separates them.</p></div></div>
+        <div class="info-item"><div class="info-icon">≈</div><div><h3>Ranges and estimates</h3><p>Values like “0.4–1.7 kJ” or “estimated” are simplified for plotting. Keep the original wording in Notes.</p></div></div>
+        <div class="info-item"><div class="info-icon">↗</div><div><h3>The plot is not a final record book</h3><p>It is a research aid. The table and sources matter as much as the visual points.</p></div></div>
+      </div>
+    </section>
+  </section>
+
+  <div class="footer">Built to stay spreadsheet-first: edit the workbook, export CSV, replace <code>data.csv</code>, refresh.</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const DATA_FILE = "data.csv";
+const JSON_FALLBACK = "data.json";
+const REQUIRED_HEADERS = "Laser/facility,Institution,Country,Wavelength,Pulse energy,Pulse duration [fs],Peak power,Rep. rate,Year demonstrated,Laser technology,Reference DOI/link,Notes,Description";
+
+const TECH_COLORS = {
+  "Ti:sapphire":"#fb6a3a", "Nd:glass":"#94a3b8", "OPCPA":"#7c8cff",
+  "Yb":"#fbbf24", "CO2":"#f472b6", "mixed":"#2dd4bf", "Unknown":"#cbd5e1"
+};
+const STATUS_COLORS = {"demonstrated":"#34d399", "design":"#fbbf24", "commissioning":"#67e8f9", "unknown":"#cbd5e1"};
+const BANDS = [
+  {name:"UV/VIS", x0:0.18, x1:0.75, color:"rgba(167,139,250,.055)"},
+  {name:"NIR", x0:0.75, x1:1.4, color:"rgba(96,165,250,.06)"},
+  {name:"SWIR", x0:1.4, x1:3, color:"rgba(45,212,191,.055)"},
+  {name:"MWIR", x0:3, x1:8, color:"rgba(251,191,36,.045)"},
+  {name:"LWIR", x0:8, x1:15, color:"rgba(251,113,133,.045)"}
+];
+const state = {
+  q:"", techs:new Set(), statuses:new Set(), bands:new Set(BANDS.map(b=>b.name)),
+  needsVerification:false, plotReadyOnly:false, sortKey:"peak_power_PW", sortDir:-1, selectedId:null
+};
+let ROWS = [];
+let SOURCE_NAME = DATA_FILE;
+
+const $ = sel => document.querySelector(sel);
+const $$ = sel => Array.from(document.querySelectorAll(sel));
+const colorFor = tech => TECH_COLORS[tech] || TECH_COLORS.Unknown;
+const statusColorFor = status => STATUS_COLORS[status] || STATUS_COLORS.unknown;
+const toast = msg => { const el = $("#toast"); el.textContent = msg; el.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(()=>el.classList.remove("show"), 2600); };
+const safe = v => String(v ?? "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[ch]));
+const fmtNum = (n, digits=4) => n == null || !Number.isFinite(n) ? "—" : Number(Number(n).toPrecision(digits)).toString();
+const fmtHz = n => n == null || !Number.isFinite(n) ? "—" : (n >= 1 ? fmtNum(n,4) : fmtNum(n,3));
+function repRateText(r){
+  const raw = String(r?.raw?.rep_rate_raw || "").trim();
+  if(/<\s*1\s*hz/i.test(raw)) return "< 1 Hz";
+  if(raw && !Number.isFinite(r?.rep_rate_hz) && /(tbd|design|shot on demand|low repetition|current facility|not yet|commissioning)/i.test(raw)) return raw;
+  if(r?.rep_rate_hz == null || !Number.isFinite(r.rep_rate_hz)) return raw || "—";
+  return `${fmtHz(r.rep_rate_hz)} Hz`;
+}
+const hasUsefulSource = s => {
+  const v = String(s || "").trim();
+  return !!v && !/^(article doi|ref\.?\s*\d+\s*in paper|alls link|placeholder|source|link)$/i.test(v);
+};
+
+function parseCSV(text){
+  text = String(text || "").replace(/^\uFEFF/, "");
+  const out = []; let row = [], cell = "", q = false;
+  for(let i=0;i<text.length;i++){
+    const ch = text[i], next = text[i+1];
+    if(q){
+      if(ch === '"' && next === '"'){ cell += '"'; i++; }
+      else if(ch === '"'){ q = false; }
+      else cell += ch;
+    }else{
+      if(ch === '"') q = true;
+      else if(ch === ','){ row.push(cell); cell = ""; }
+      else if(ch === '\n'){ row.push(cell); out.push(row); row = []; cell = ""; }
+      else if(ch !== '\r') cell += ch;
+    }
+  }
+  if(cell.length || row.length){ row.push(cell); out.push(row); }
+  return out.filter(r => r.some(c => String(c).trim() !== ""));
+}
+const canon = s => String(s ?? "")
+  .toLowerCase().replace(/[\u03bbλ]/g,"lambda")
+  .replace(/\[[^\]]*\]|\([^)]*\)/g,"").replace(/[^a-z0-9]+/g,"").trim();
+const HEADER_ALIASES = {
+  name:["laserfacility","lasername","facilityname","name"], institution:["institution"], country:["country"],
+  wavelength_raw:["wavelength","wavelengthnm","lambdanm","lambda"],
+  pulse_energy_raw:["pulseenergy","pulseenergyj","energy","energyj"],
+  pulse_duration_raw:["pulseduration","pulsedurationfs","duration","durationfs"],
+  peak_power_raw:["peakpower","peakpowerpw","power"], rep_rate_raw:["reprate","repetitionrate","repratehz","repetitionratehz"],
+  year_raw:["yeardemonstrated","year"], technology_raw:["lasertechnology","technology","tech"], status:["status"],
+  doi:["referencedoilink","referencesdoilink","reference","references","doi","link","sourcedoi","source"], notes:["notes"], description:["description"]
+};
+const aliasToKey = Object.fromEntries(Object.entries(HEADER_ALIASES).flatMap(([k,arr]) => arr.map(a => [a,k])));
+function headerMap(row){
+  const map = {};
+  row.forEach((h,i) => { const k = aliasToKey[canon(h)]; if(k && map[k] == null) map[k] = i; });
+  const score = Object.keys(map).length;
+  return score >= 5 && (map.name != null || map.institution != null) ? map : null;
+}
+function val(row,map,key){ return map[key] == null ? "" : String(row[map[key]] ?? "").trim(); }
+function cleanNumberText(s){ return String(s ?? "").replace(/[–—−]/g,"-").replace(/(\d),(?=\d{3}\b)/g,"$1"); }
+function nums(s){ return (cleanNumberText(s).match(/[-+]?\d*\.?\d+(?:e[-+]?\d+)?/ig) || []).map(Number).filter(Number.isFinite); }
+function firstNumber(s){ const a = nums(s); return a.length ? a[0] : null; }
+function largestNumber(s){ const a = nums(s); return a.length ? Math.max(...a) : null; }
+function parseWavelengthNm(s){
+  const raw = String(s ?? ""); const n = firstNumber(raw); if(n == null) return null;
+  if(/(?:µm|um|micron)/i.test(raw)) return n * 1000;
+  if(/\bnm\b/i.test(raw)) return n;
+  return n > 30 ? n : n * 1000;
+}
+function parseEnergyJ(s){
+  const raw = String(s ?? ""); if(!raw || /not stated|n\/a|unknown|—/i.test(raw)) return null;
+  const n = firstNumber(raw); if(n == null) return null;
+  if(/\bMJ\b/.test(raw)) return n * 1e6;
+  if(/\bkJ\b/i.test(raw)) return n * 1e3;
+  if(/\bmJ\b/.test(raw)) return n * 1e-3;
+  return n;
+}
+function parseDurationFs(s){
+  const raw = String(s ?? ""); if(!raw || /not stated|n\/a|unknown|—/i.test(raw)) return null;
+  const n = firstNumber(raw); if(n == null) return null;
+  if(/\bns\b/i.test(raw)) return n * 1e6;
+  if(/\bps\b/i.test(raw)) return n * 1e3;
+  if(/\bfs\b/i.test(raw)) return n;
+  if(/\bs\b/i.test(raw) && !/shots?\b/i.test(raw)) return n * 1e15;
+  return n;
+}
+function parsePowerPW(s){
+  const raw = String(s ?? ""); if(!raw || /not stated|n\/a|unknown|—/i.test(raw)) return null;
+  const re = /([-+]?\d*\.?\d+(?:e[-+]?\d+)?)\s*([EPTGMK]?W)\b/ig;
+  let m, vals = [];
+  while((m = re.exec(raw))){
+    const n = Number(m[1]); const unit = m[2].toUpperCase(); if(!Number.isFinite(n)) continue;
+    const mult = unit === "EW" ? 1000 : unit === "PW" ? 1 : unit === "TW" ? 1e-3 : unit === "GW" ? 1e-6 : unit === "MW" ? 1e-9 : unit === "KW" ? 1e-12 : 1e-15;
+    vals.push(n * mult);
+  }
+  if(vals.length) return Math.max(...vals);
+  const n = firstNumber(raw); return n == null ? null : n;
+}
+function parseRepHz(s){
+  const raw = String(s ?? "").replace(/[–—−]/g,"-").toLowerCase();
+  if(!raw || /(single|shot-based|low rep|not stated|n\/a|user facility|—)/.test(raw)) return null;
+  if(/<\s*1\s*hz\b/.test(raw)) return 0.5;
+  let m = raw.match(/([-+]?\d*\.?\d+)\s*mhz\b/); if(m) return Number(m[1]) * 1e6;
+  m = raw.match(/([-+]?\d*\.?\d+)\s*khz\b/); if(m) return Number(m[1]) * 1e3;
+  m = raw.match(/([-+]?\d*\.?\d+)\s*hz\b/); if(m) return Number(m[1]);
+  m = raw.match(/(?:~\s*)?([-+]?\d*\.?\d+)?\s*shots?\s*\/\s*(\d*\.?\d+)?\s*min/); if(m) return Number(m[1] || 1)/(Number(m[2] || 1)*60);
+  m = raw.match(/(?:~\s*)?([-+]?\d*\.?\d+)?\s*shots?\s*\/\s*(\d*\.?\d+)?\s*(?:h|hr|hour)/); if(m) return Number(m[1] || 1)/(Number(m[2] || 1)*3600);
+  m = raw.match(/(?:~\s*)?([-+]?\d*\.?\d+)?\s*shots?\s*\/\s*(\d*\.?\d+)\s*s/); if(m) return Number(m[1] || 1)/Number(m[2]);
+  return null;
+}
+function parseYear(s){
+  const ys = nums(s).filter(n => n >= 1960 && n <= 2100);
+  return ys.length ? Math.max(...ys) : null;
+}
+function inferTechnology(raw){
+  const t = String(raw || "").toLowerCase();
+  if(!t) return "Unknown";
+  if(t.includes("hybrid") || t.includes("mixed") || (t.includes("opcpa") && (t.includes("ti") || t.includes("glass")))) return "mixed";
+  if(t.includes("ti:sapphire") || t.includes("ti sapphire") || t.includes("ti-sa") || t.includes("titanium")) return "Ti:sapphire";
+  if(t.includes("all-opcpa") || t.includes("opcpa")) return "OPCPA";
+  if(t.includes("nd:glass") || t.includes("nd glass") || t.includes("glass")) return "Nd:glass";
+  if(t.includes("yb")) return "Yb";
+  if(t.includes("co2") || t.includes("co₂")) return "CO2";
+  return raw.trim() || "Unknown";
+}
+function inferStatus(raw){
+  const text = [raw.status, raw.peak_power_raw, raw.rep_rate_raw, raw.year_raw, raw.notes, raw.description, raw.pulse_energy_raw].join(" ").toLowerCase();
+  if(/design|planned|proposal|conceptual|spec|under construction/.test(text)) return "design";
+  if(/commissioning/.test(text)) return "commissioning";
+  return "demonstrated";
+}
+function round(n, digits=6){ return n == null || !Number.isFinite(n) ? null : Number(Number(n).toPrecision(digits)); }
+function classifyBand(wavelengthNm){
+  if(!(wavelengthNm > 0)) return "Missing";
+  const um = wavelengthNm / 1000;
+  return (BANDS.find(b => um >= b.x0 && um < b.x1) || BANDS[BANDS.length-1]).name;
+}
+function makeFlags(r){
+  const flags = [];
+  if(!r.plotReady) flags.push({type:"bad", label:"Not plotted", detail:"Needs wavelength and peak power."});
+  if(!r.wavelength_nm) flags.push({type:"bad", label:"Missing wavelength", detail:"Add a wavelength value, such as 800 nm or 0.8 µm."});
+  if(!r.peak_power_PW) flags.push({type:"bad", label:"Missing peak", detail:"Add peak power or enough energy/duration data to compute it."});
+  if(!hasUsefulSource(r.doi)) flags.push({type:"warn", label:"Source needed", detail:"Add DOI, facility page, or report link."});
+  if(!r.pulse_energy_J) flags.push({type:"warn", label:"Energy missing", detail:"Add pulse energy when available."});
+  if(!r.pulse_duration_fs) flags.push({type:"warn", label:"Duration missing", detail:"Add pulse duration when available."});
+  if(r.peak_power_source === "computed") flags.push({type:"cyan", label:"Peak computed", detail:"Peak power came from energy divided by duration."});
+  if(r.status !== "demonstrated") flags.push({type:"warn", label:r.status, detail:"This row is not marked as demonstrated."});
+  return flags;
+}
+function normalizeRow(raw, idx){
+  const pulse_energy_J = parseEnergyJ(raw.pulse_energy_raw);
+  const pulse_duration_fs = parseDurationFs(raw.pulse_duration_raw);
+  let peak_power_PW = parsePowerPW(raw.peak_power_raw);
+  let peak_power_source = raw.peak_power_raw ? "reported" : "";
+  if((peak_power_PW == null || !Number.isFinite(peak_power_PW)) && pulse_energy_J != null && pulse_duration_fs){
+    peak_power_PW = pulse_energy_J / pulse_duration_fs; // 1 J / 1 fs = 1 PW
+    peak_power_source = "computed";
+  }
+  const wavelength_nm = parseWavelengthNm(raw.wavelength_raw);
+  const r = {
+    id:`r${idx}`, raw,
+    name:raw.name || `Unnamed laser ${idx}`,
+    institution:raw.institution, country:raw.country,
+    wavelength_nm:round(wavelength_nm), pulse_energy_J:round(pulse_energy_J), pulse_duration_fs:round(pulse_duration_fs),
+    peak_power_PW:round(peak_power_PW), peak_power_source:peak_power_source || "reported",
+    rep_rate_hz:round(parseRepHz(raw.rep_rate_raw)), year:parseYear(raw.year_raw),
+    technology:inferTechnology(raw.technology_raw), status:(raw.status || inferStatus(raw)).toLowerCase(), doi:raw.doi,
+    notes:[raw.notes, raw.description].filter(Boolean).join(" — "),
+    originalSource: raw.doi
+  };
+  if(!["demonstrated","design","commissioning"].includes(r.status)) r.status = "unknown";
+  r.band = classifyBand(r.wavelength_nm);
+  r.plotReady = !!(r.wavelength_nm > 0 && r.peak_power_PW > 0);
+  r.flags = makeFlags(r);
+  r.needsVerification = r.flags.some(f => f.type === "bad" || f.label === "Source needed" || f.label === "Energy missing" || f.label === "Duration missing");
+  return r;
+}
+function rowsFromCSV(text){
+  const rows = parseCSV(text); let map = null; let out = []; let idx = 1;
+  for(const row of rows){
+    const maybe = headerMap(row);
+    if(maybe){ map = maybe; continue; }
+    if(!map) continue;
+    const raw = {
+      name:val(row,map,"name"), institution:val(row,map,"institution"), country:val(row,map,"country"),
+      wavelength_raw:val(row,map,"wavelength_raw"), pulse_energy_raw:val(row,map,"pulse_energy_raw"),
+      pulse_duration_raw:val(row,map,"pulse_duration_raw"), peak_power_raw:val(row,map,"peak_power_raw"),
+      rep_rate_raw:val(row,map,"rep_rate_raw"), year_raw:val(row,map,"year_raw"), technology_raw:val(row,map,"technology_raw"),
+      status:val(row,map,"status"), doi:val(row,map,"doi"), notes:val(row,map,"notes"), description:val(row,map,"description")
+    };
+    if(!raw.name && !raw.institution) continue;
+    out.push(normalizeRow(raw, idx++));
+  }
+  return out;
+}
+function normalizeJSONRows(rows){
+  return rows.map((r,i) => normalizeRow({
+    name:r.name, institution:r.institution, country:r.country,
+    wavelength_raw:r.wavelength_nm ? `${r.wavelength_nm} nm` : "", pulse_energy_raw:r.pulse_energy_J ? `${r.pulse_energy_J} J` : "",
+    pulse_duration_raw:r.pulse_duration_fs ? `${r.pulse_duration_fs} fs` : "", peak_power_raw:r.peak_power_PW ? `${r.peak_power_PW} PW` : "",
+    rep_rate_raw:r.rep_rate_hz ? `${r.rep_rate_hz} Hz` : "", year_raw:r.year || "", technology_raw:r.technology || "",
+    status:r.status || "", doi:r.doi || "", notes:r.notes || "", description:r.description || ""
+  }, i+1));
+}
+async function loadDataFile(){
+  const msg = $("#sourceMsg"), light = $("#sourceLight");
+  try{
+    const r = await fetch(DATA_FILE, {cache:"no-store"});
+    if(!r.ok) throw new Error(`HTTP ${r.status}`);
+    const text = await r.text();
+    applyRows(rowsFromCSV(text), DATA_FILE);
+    light.classList.add("good");
+    msg.innerHTML = `Loaded <b>${ROWS.length}</b> spreadsheet rows from <code>${DATA_FILE}</code>. ${ROWS.filter(r=>r.plotReady).length} are plot-ready.`;
+  }catch(csvErr){
+    try{
+      const r = await fetch(JSON_FALLBACK, {cache:"no-store"});
+      if(!r.ok) throw new Error(`HTTP ${r.status}`);
+      applyRows(normalizeJSONRows(await r.json()), JSON_FALLBACK);
+      light.classList.remove("good");
+      msg.innerHTML = `Could not load <code>${DATA_FILE}</code> (${csvErr.message}). Showing fallback <code>${JSON_FALLBACK}</code>.`;
+    }catch(jsonErr){
+      light.classList.remove("good");
+      msg.innerHTML = `Could not load data files. Run a local server: <code>python3 -m http.server</code>.`;
+      $("#plot").innerHTML = `<div class="plot-empty">No data loaded. ${safe(csvErr.message)}</div>`;
+    }
+  }
+}
+function applyRows(rows, sourceName){
+  ROWS = rows; SOURCE_NAME = sourceName; state.selectedId = null;
+  state.techs = new Set([...new Set(ROWS.map(r=>r.technology))]);
+  state.statuses = new Set([...new Set(ROWS.map(r=>r.status))]);
+  state.bands = new Set(BANDS.map(b=>b.name));
+  buildChips(); render();
+}
+function filteredRows(){
+  const q = state.q.trim().toLowerCase();
+  return ROWS.filter(r => {
+    if(!state.techs.has(r.technology)) return false;
+    if(!state.statuses.has(r.status)) return false;
+    if(r.band !== "Missing" && !state.bands.has(r.band)) return false;
+    if(state.needsVerification && !r.needsVerification) return false;
+    if(state.plotReadyOnly && !r.plotReady) return false;
+    if(q){
+      const hay = [r.name,r.institution,r.country,r.technology,r.status,r.doi,r.notes,r.raw.peak_power_raw,r.raw.wavelength_raw].join(" ").toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+function buildChips(){
+  buildChipSet("#techChips", [...new Set(ROWS.map(r=>r.technology))].sort(), state.techs, v => colorFor(v));
+  buildChipSet("#statusChips", [...new Set(ROWS.map(r=>r.status))].sort(), state.statuses, v => statusColorFor(v));
+  buildChipSet("#bandChips", BANDS.map(b=>b.name), state.bands, v => (BANDS.find(b=>b.name===v)||{}).color || "rgba(255,255,255,.1)", true);
+}
+function buildChipSet(sel, values, set, colorFn, isBand=false){
+  const el = $(sel); el.innerHTML = "";
+  values.forEach(v => {
+    const chip = document.createElement("button");
+    chip.type = "button"; chip.className = "chip"; chip.dataset.on = set.has(v); chip.textContent = "";
+    const color = colorFn(v);
+    chip.style.setProperty("--chip-color", isBand ? "#cbd5e1" : color);
+    chip.style.setProperty("--chip-bg", isBand ? color : `${color}33`);
+    chip.style.setProperty("--chip-line", isBand ? "rgba(255,255,255,.18)" : `${color}88`);
+    chip.innerHTML = `<span class="mini-dot"></span><span>${safe(v)}</span>`;
+    chip.addEventListener("click", () => { set.has(v) ? set.delete(v) : set.add(v); chip.dataset.on = set.has(v); render(); });
+    el.appendChild(chip);
+  });
+}
+function render(){
+  updateStats(); updateHealth(); updatePlotLegend(filteredRows()); drawPlot(filteredRows()); drawTable(filteredRows()); updateDetail();
+  $("#verifyToggle").setAttribute("aria-pressed", state.needsVerification);
+  $("#plotReadyToggle").setAttribute("aria-pressed", state.plotReadyOnly);
+}
+function updateStats(){
+  const total = ROWS.length, plot = ROWS.filter(r=>r.plotReady).length;
+  const plotRows = ROWS.filter(r=>r.plotReady);
+  const max = plotRows.reduce((a,b) => !a || b.peak_power_PW > a.peak_power_PW ? b : a, null);
+  const countries = new Set(ROWS.map(r=>r.country).filter(Boolean)).size;
+  const techs = new Set(ROWS.map(r=>r.technology).filter(Boolean)).size;
+  const missingSource = ROWS.filter(r=>!hasUsefulSource(r.doi)).length;
+  $("#statTotal").textContent = total || "—";
+  $("#statTotalHint").textContent = SOURCE_NAME;
+  $("#statPlot").textContent = plot || "—";
+  $("#statPeak").textContent = max ? `${fmtNum(max.peak_power_PW,3)} PW` : "—";
+  $("#statPeakHint").textContent = max ? max.name : "—";
+  $("#statCountries").textContent = countries || "—";
+  $("#statTechs").textContent = techs || "—";
+  $("#statMissingSource").textContent = missingSource || "0";
+}
+function updateHealth(){
+  const rows = ROWS;
+  const items = [
+    ["Rows not plotted", rows.filter(r=>!r.plotReady).length, "Need wavelength or peak power"],
+    ["Missing source/DOI", rows.filter(r=>!hasUsefulSource(r.doi)).length, "Add DOI or source link"],
+    ["Missing energy", rows.filter(r=>!r.pulse_energy_J).length, "Good for verification"],
+    ["Missing duration", rows.filter(r=>!r.pulse_duration_fs).length, "Needed for computed peak"],
+    ["Computed peaks", rows.filter(r=>r.peak_power_source === "computed").length, "Energy divided by duration"],
+    ["Design/commissioning", rows.filter(r=>r.status !== "demonstrated").length, "Not final record values"]
+  ];
+  $("#healthBox").innerHTML = items.map(([label, count, hint]) => `<div class="health-row"><div><b>${count}</b> <span>${safe(label)}</span></div><span>${safe(hint)}</span></div>`).join("");
+}
+function updatePlotLegend(rows){
+  const el = $("#plotLegend"); if(!el) return;
+  const techs = [...new Set(rows.filter(r=>r.plotReady).map(r=>r.technology))].sort();
+  const techItems = techs.length ? techs.map(t => `<span class="legend-item"><span class="legend-swatch" style="--swatch:${colorFor(t)}"></span>${safe(t)}</span>`).join("") : `<span class="legend-item">No plotted technologies visible</span>`;
+  el.innerHTML = `<b>Technology key</b>${techItems}<span style="flex-basis:14px"></span><b>Status shape</b><span class="legend-item"><span class="legend-shape">●</span>demonstrated</span><span class="legend-item"><span class="legend-shape">◇</span>design / commissioning</span>`;
+}
+function markerSize(hz){
+  if(hz == null || hz <= 0) return 9;
+  return Math.max(9, Math.min(34, 10 + 5 * (Math.log10(hz) + 2)));
+}
+function drawPlot(rows){
+  const plotRows = rows.filter(r=>r.plotReady);
+  $("#count").textContent = `${rows.length} rows visible • ${plotRows.length} plotted • ${ROWS.length} total`;
+  if(!window.Plotly){ $("#plot").innerHTML = `<div class="plot-empty">Plotly is still loading or blocked. The table is usable below.</div>`; return; }
+  if(!plotRows.length){ $("#plot").innerHTML = `<div class="plot-empty">No plot-ready rows match the current filters.</div>`; return; }
+  const byTech = {};
+  plotRows.forEach(r => (byTech[r.technology] ||= []).push(r));
+  const traces = Object.entries(byTech).map(([tech, rs]) => ({
+    type:"scatter", mode:"markers", name:tech,
+    x:rs.map(r=>r.wavelength_nm/1000), y:rs.map(r=>r.peak_power_PW),
+    text:rs.map(r=>r.name), customdata:rs.map(r=>[r.id,r.name,r.institution,r.country,r.year ?? "—",repRateText(r),r.status,r.peak_power_source,r.raw.pulse_energy_raw || "—",r.raw.pulse_duration_raw || "—",r.doi || "—"]),
+    marker:{
+      color:colorFor(tech), opacity:.9,
+      size:rs.map(r=>markerSize(r.rep_rate_hz)),
+      symbol:rs.map(r=>r.status === "demonstrated" ? "circle" : "diamond-open"),
+      line:{width:1.6, color:"rgba(255,255,255,.56)"}
+    },
+    hovertemplate:"<b>%{customdata[1]}</b><br>%{customdata[2]} · %{customdata[3]}<br>λ %{x:.3g} µm · %{y:.3g} PW<br>Energy/duration: %{customdata[8]} / %{customdata[9]}<br>Year: %{customdata[4]} · Rep: %{customdata[5]}<br>Status: %{customdata[6]} · Peak: %{customdata[7]}<extra></extra>"
+  }));
+  const maxX = Math.max(12, ...plotRows.map(r=>r.wavelength_nm/1000))*1.04;
+  const minX = Math.min(.28, ...plotRows.map(r=>r.wavelength_nm/1000))*.94;
+  const visibleBands = BANDS.map(b => {
+    const x0 = Math.max(b.x0, minX), x1 = Math.min(b.x1, maxX);
+    return {...b, vx0:x0, vx1:x1, vc:(x0+x1)/2};
+  }).filter(b => b.vx1 > b.vx0);
+  const shapes = visibleBands.map(b => ({type:"rect", xref:"x", yref:"paper", x0:b.x0, x1:b.x1, y0:0, y1:1, fillcolor:b.color, line:{width:0}, layer:"below"}));
+  const annotations = visibleBands.map(b => ({x:b.vc, y:1.018, xref:"x", yref:"paper", text:b.name, showarrow:false, yanchor:"bottom", font:{size:11, color:"#b7c2d6"}}));
+  const maxY = Math.max(...plotRows.map(r=>r.peak_power_PW))*1.45;
+  Plotly.react("plot", traces, {
+    paper_bgcolor:"rgba(0,0,0,0)", plot_bgcolor:"rgba(0,0,0,0)", font:{color:"#cbd5e1", size:12},
+    margin:{l:68,r:22,t:50,b:62},
+    xaxis:{title:"Wavelength (µm)", range:[minX,maxX], gridcolor:"rgba(148,163,184,.13)", zeroline:false, ticks:"outside", tickcolor:"rgba(148,163,184,.25)"},
+    yaxis:{title:"Peak power (PW)", type:"log", range:[Math.log10(Math.max(0.0001, Math.min(...plotRows.map(r=>r.peak_power_PW))*.55)), Math.log10(maxY)], gridcolor:"rgba(148,163,184,.13)", zeroline:false, ticks:"outside", tickcolor:"rgba(148,163,184,.25)"},
+    shapes, annotations, showlegend:false, hoverlabel:{bgcolor:"#0f172a", bordercolor:"rgba(255,255,255,.22)", font:{color:"#f8fafc"}}
+  }, {responsive:true, displayModeBar:true, modeBarButtonsToRemove:["lasso2d","select2d"]});
+  const plot = $("#plot");
+  plot.on?.("plotly_click", ev => { const id = ev.points?.[0]?.customdata?.[0]; if(id){ state.selectedId = id; updateDetail(); highlightRow(id); } });
+}
+const COLS = [
+  ["name","Laser / facility"], ["institution","Institution"], ["country","Country"], ["wavelength_nm","λ (nm)"],
+  ["peak_power_PW","Peak (PW)"], ["pulse_energy_J","Energy (J)"], ["pulse_duration_fs","Duration (fs)"],
+  ["rep_rate_hz","Rep (Hz)"], ["year","Year"], ["technology","Tech"], ["status","Status"], ["quality","Quality"], ["doi","Source"]
+];
+function qualityPill(r){
+  if(!r.plotReady) return `<span class="pill bad">Not plotted</span>`;
+  if(r.needsVerification) return `<span class="pill warn">Check</span>`;
+  return `<span class="pill good">Looks good</span>`;
+}
+function sourceCell(r){
+  const s = String(r.doi || "").trim();
+  if(!s) return `<span class="pill warn">Add source</span>`;
+  if(/^https?:\/\//i.test(s)) return `<a class="source-link" href="${safe(s)}" target="_blank" rel="noopener">${safe(s)}</a>`;
+  if(/^10\.\S+/.test(s)) return `<a class="source-link" href="https://doi.org/${safe(s)}" target="_blank" rel="noopener">${safe(s)}</a>`;
+  return `<span class="pill warn">${safe(s)}</span>`;
+}
+function drawTable(rows){
+  const sorted = [...rows].sort((a,b)=>{
+    if(state.sortKey === "quality") return state.sortDir * (Number(a.needsVerification) - Number(b.needsVerification));
+    let x = a[state.sortKey], y = b[state.sortKey];
+    if(x == null && y == null) return 0; if(x == null) return 1; if(y == null) return -1;
+    return typeof x === "string" ? state.sortDir * x.localeCompare(y) : state.sortDir * (x-y);
+  });
+  $("#tbl thead").innerHTML = `<tr>${COLS.map(([k,l]) => `<th data-k="${k}">${safe(l)}${state.sortKey===k ? (state.sortDir<0 ? " ↓" : " ↑") : ""}</th>`).join("")}</tr>`;
+  $$("#tbl th").forEach(th => th.addEventListener("click", () => { const k = th.dataset.k; if(state.sortKey === k) state.sortDir *= -1; else { state.sortKey = k; state.sortDir = -1; } drawTable(filteredRows()); }));
+  $("#tbl tbody").innerHTML = sorted.map(r => `<tr data-id="${r.id}"${state.selectedId===r.id ? ' style="outline:1px solid rgba(103,232,249,.5)"' : ""}>
+    <td class="name-cell">${safe(r.name)}</td>
+    <td class="inst-cell">${safe(r.institution || "—")}</td>
+    <td>${safe(r.country || "—")}</td>
+    <td>${fmtNum(r.wavelength_nm,5)}</td>
+    <td><b>${fmtNum(r.peak_power_PW,4)}</b></td>
+    <td>${fmtNum(r.pulse_energy_J,5)}</td>
+    <td>${fmtNum(r.pulse_duration_fs,5)}</td>
+    <td>${safe(repRateText(r))}</td>
+    <td>${r.year ?? "—"}</td>
+    <td><span class="pill" style="color:${colorFor(r.technology)};border-color:${colorFor(r.technology)}55;background:${colorFor(r.technology)}18">${safe(r.technology)}</span></td>
+    <td><span class="pill" style="color:${statusColorFor(r.status)};border-color:${statusColorFor(r.status)}55;background:${statusColorFor(r.status)}18">${safe(r.status)}</span></td>
+    <td>${qualityPill(r)}</td>
+    <td>${sourceCell(r)}</td>
+  </tr>`).join("");
+  $$("#tbl tbody tr").forEach(tr => tr.addEventListener("click", e => { if(e.target.tagName.toLowerCase() === "a") return; state.selectedId = tr.dataset.id; updateDetail(); highlightRow(tr.dataset.id); }));
+}
+function updateDetail(){
+  const r = ROWS.find(x=>x.id===state.selectedId);
+  if(!r){ $("#detail").innerHTML = `<p class="detail-empty">No laser selected yet. Try clicking a marker or row to inspect values and verification flags.</p>`; return; }
+  const flagHtml = r.flags.length ? r.flags.map(f => `<span class="pill ${f.type}" title="${safe(f.detail)}">${safe(f.label)}</span>`).join("") : `<span class="pill good">No major flags</span>`;
+  $("#detail").innerHTML = `
+    <h3 class="detail-title">${safe(r.name)}</h3>
+    <p class="detail-place">${safe(r.institution || "—")} · ${safe(r.country || "—")}</p>
+    <div class="tag-row"><span class="pill" style="color:${colorFor(r.technology)};border-color:${colorFor(r.technology)}66;background:${colorFor(r.technology)}20">${safe(r.technology)}</span><span class="pill" style="color:${statusColorFor(r.status)};border-color:${statusColorFor(r.status)}66;background:${statusColorFor(r.status)}20">${safe(r.status)}</span>${flagHtml}</div>
+    <div class="detail-grid">
+      <div class="kv"><div class="k">Wavelength</div><div class="v">${r.wavelength_nm ? `${fmtNum(r.wavelength_nm,5)} nm / ${fmtNum(r.wavelength_nm/1000,4)} µm` : "—"}</div></div>
+      <div class="kv"><div class="k">Peak power</div><div class="v">${r.peak_power_PW ? `${fmtNum(r.peak_power_PW,4)} PW` : "—"}</div></div>
+      <div class="kv"><div class="k">Energy</div><div class="v">${fmtNum(r.pulse_energy_J,5)} J</div></div>
+      <div class="kv"><div class="k">Duration</div><div class="v">${fmtNum(r.pulse_duration_fs,5)} fs</div></div>
+      <div class="kv"><div class="k">Rep. rate</div><div class="v">${safe(repRateText(r))}</div></div>
+      <div class="kv"><div class="k">Year</div><div class="v">${r.year ?? "—"}</div></div>
+    </div>
+    <div class="notes"><b>Source:</b> ${sourceCell(r)}<br><b>Raw peak field:</b> ${safe(r.raw.peak_power_raw || "—")}<br><b>Notes:</b> ${safe(r.notes || "No notes yet.")}</div>`;
+}
+function highlightRow(id){
+  const tr = $(`#tbl tbody tr[data-id="${id}"]`); if(tr){ tr.scrollIntoView({block:"nearest", behavior:"smooth"}); }
+  drawTable(filteredRows());
+}
+function resetFilters(){
+  state.q=""; $("#q").value=""; state.needsVerification=false; state.plotReadyOnly=false;
+  state.techs = new Set([...new Set(ROWS.map(r=>r.technology))]); state.statuses = new Set([...new Set(ROWS.map(r=>r.status))]); state.bands = new Set(BANDS.map(b=>b.name));
+  buildChips(); render();
+}
+function toCSV(rows){
+  const headers = ["Laser/facility","Institution","Country","Wavelength","Pulse energy","Pulse duration [fs]","Peak power","Rep. rate","Year demonstrated","Laser technology","Reference DOI/link","Notes","Description"];
+  const body = rows.map(r => [r.name,r.institution,r.country,r.raw.wavelength_raw,r.raw.pulse_energy_raw,r.raw.pulse_duration_raw,r.raw.peak_power_raw,r.raw.rep_rate_raw,r.raw.year_raw,r.raw.technology_raw,r.doi,r.raw.notes,r.raw.description]);
+  return [headers, ...body].map(row => row.map(v => {
+    const s = String(v ?? ""); return /[",\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
+  }).join(",")).join("\n");
+}
+function downloadText(filename, text){
+  const blob = new Blob([text], {type:"text/csv;charset=utf-8"}); const url = URL.createObjectURL(blob);
+  const a = document.createElement("a"); a.href = url; a.download = filename; a.click(); URL.revokeObjectURL(url);
+}
+function copyHeaders(){ navigator.clipboard?.writeText(REQUIRED_HEADERS).then(()=>toast("CSV headers copied"),()=>toast("Could not copy headers")); }
+function importCSVFile(file){
+  if(!file) return; const reader = new FileReader();
+  reader.onload = () => { try{ const rows = rowsFromCSV(reader.result); applyRows(rows, file.name); $("#sourceLight").classList.add("good"); $("#sourceMsg").innerHTML = `Previewing <b>${safe(file.name)}</b> with <b>${rows.length}</b> rows. Replace <code>data.csv</code> to make this permanent.`; toast(`Imported ${rows.length} rows`); } catch(e){ toast(`CSV import failed: ${e.message}`); } };
+  reader.readAsText(file);
+}
+
+$("#q").addEventListener("input", e => { state.q = e.target.value; render(); });
+$("#verifyToggle").addEventListener("click", () => { state.needsVerification = !state.needsVerification; render(); });
+$("#plotReadyToggle").addEventListener("click", () => { state.plotReadyOnly = !state.plotReadyOnly; render(); });
+$("#resetBtn").addEventListener("click", resetFilters);
+$("#exportBtn").addEventListener("click", () => downloadText("visible_laser_rows.csv", toCSV(filteredRows())));
+$("#importBtn").addEventListener("click", () => $("#csvInput").click());
+$("#csvInput").addEventListener("change", e => importCSVFile(e.target.files[0]));
+$("#reloadBtn").addEventListener("click", () => { loadDataFile(); toast("Reloading data.csv"); });
+$("#copyHeadersBtn").addEventListener("click", copyHeaders);
+$("#copyHeadersBtn2").addEventListener("click", copyHeaders);
+["dragenter","dragover"].forEach(evt => $("#dropArea").addEventListener(evt, e => { e.preventDefault(); $("#dropzone").classList.add("drag"); }));
+["dragleave","drop"].forEach(evt => $("#dropArea").addEventListener(evt, e => { e.preventDefault(); $("#dropzone").classList.remove("drag"); }));
+$("#dropArea").addEventListener("drop", e => importCSVFile(e.dataTransfer.files[0]));
+
+loadDataFile();
+</script>
+</body>
+</html>
